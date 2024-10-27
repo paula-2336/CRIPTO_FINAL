@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Transferencias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #004d40;
+            text-align: center;
+        }
+
+        .message, .section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #004d40;
+            color: white;
+        }
+
+        td {
+            background-color: #ffffff;
+            color: #333;
+        }
+
+        footer {
+            background-color: #004d40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+        }
+
+        footer p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .flash-message {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #d4edda;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Historial de Transferencias</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-message">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if not session_iniciada %}
+    <div class="message">
+        <p>Por favor, <a href="login.html">inicia sesión</a> para ver tu historial de transferencias.</p>
+    </div>
+    {% else %}
+        <!-- Transferencias Enviadas -->
+        <div class="section">
+            <h2>Transferencias Enviadas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cuenta Destino</th>
+                        <th>Cantidad</th>
+                        <th>Concepto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transferencia in transferencias_enviadas %}
+                    <tr>
+                        <td>{{ transferencia.fecha }}</td>
+                        <td>{{ transferencia.cuenta_destino }}</td>
+                        <td>{{ transferencia.cantidad }} €</td>
+                        <td>{{ transferencia.concepto }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Transferencias Recibidas -->
+        <div class="section">
+            <h2>Transferencias Recibidas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cuenta Origen</th>
+                        <th>Cantidad</th>
+                        <th>Concepto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transferencia in transferencias_recibidas %}
+                    <tr>
+                        <td>{{ transferencia.fecha }}</td>
+                        <td>{{ transferencia.cuenta_origen }}</td>
+                        <td>{{ transferencia.cantidad }} €</td>
+                        <td>{{ transferencia.concepto }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <footer>
+        <p>Vanguard Trust Bank</p>
+        <p>Dirección: Av. de la Libertad 123, Ciudad Financiera</p>
+        <p>Teléfono: +34 900 123 456</p>
+        <p>Email: contacto@vanguardbank.com</p>
+    </footer>
+</body>
+</html>

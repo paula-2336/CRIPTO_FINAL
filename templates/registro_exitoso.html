@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Exitoso</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; 
+            margin: 0;
+            background-color: #e0f7fa;
+        }
+
+        .message-container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: auto; 
+        }
+
+        h1 {
+            color: #004d40;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        
+        footer {
+            background-color: #004d40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%; 
+            position: relative; 
+            bottom: 0; 
+        }
+
+        footer p {
+            margin: 5px 0;
+            font-size: 0.9rem; 
+        }
+    </style>
+    <script>
+        // Redirige al usuario a la página de inicio de sesión después de 5 segundos
+        setTimeout(function() {
+            window.location.href = "login.html";  
+        }, 5000); 
+    </script>
+</head>
+<body>
+    <div class="message-container">
+        <h1>¡Registro Exitoso!</h1>
+        <p>Serás redirigido a la página de inicio de sesión en unos momentos.</p>
+        <p>Si no eres redirigido automáticamente, haz clic <a href="login.html">aquí</a>.</p>
+    </div>
+    <footer>
+        <p>Vanguard Trust Bank</p>
+        <p>Dirección: Av. de la Libertad 123, Ciudad Financiera</p>
+        <p>Teléfono: +34 900 123 456</p>
+        <p>Email: contacto@vanguardbank.com</p>
+    </footer>
+</body>
+</html>
