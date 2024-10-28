@@ -7,8 +7,7 @@ class BaseDatos:
         """Creamos las conexiones con las bases de datos"""
         #Conectamos con la base de datos de los usuarios utilizando sqlite3. 
         self.__criptografia = Cripto()
-        self.usuarios = "usuarios.db"
-        self.conexion = sqlite3.connect("test.db")
+        self.conexion = sqlite3.connect("test.db", check_same_thread=False)
         self.cursor = self.conexion.cursor()
         self.cursor.execute("PRAGMA foreign_keys = 1")
     
@@ -19,7 +18,7 @@ class BaseDatos:
         #Decisiones respecto al diseño; varchar2(100) para los apellidos para abrcar aquellos compuestos o largos, 
         #varchar2(254) para email ya que es el maximo permitido por los estándares de internet. 
         self.cursor.execute("""
-                                CREATE TABLE usuarios(
+                                CREATE TABLE usuarios (
                                 dni_usuario CHAR(20) PRIMARY KEY, -- Número de teléfono del usuario
                                 hash_contraseña CHAR(256) NOT NULL, -- Token de uso único contraseña
                                 salt_contraseña CHAR(64) NOT NULL, -- Salt aleatorio de la contraeña
@@ -56,10 +55,10 @@ class BaseDatos:
         """Añadimos un nuevo usuario a la base de datos siempre y cuando proporcione los requisitos necesarios"""
         salt_contraseña, hash_contraseña = self.__criptografia.generar_contraseña(contraseña)
         salt_clave, clave = self.__criptografia.prim_deriv_clave_contraseña(contraseña)
-        nonce_telefono, telefono = self.__criptografia.encrypt_mis_datos(telefono)
-        nonce_email, email = self.__criptografia.encrypt_mis_datos(email)
-        nonce_nombre, nombre = self.__criptografia.encrypt_mis_datos(nombre)
-        nonce_apellido, apellido = self.__criptografia.encrypt_mis_datos(apellido)
+        nonce_telefono, telefono = self.__criptografia.encrypt_mis_datos(clave, telefono)
+        nonce_email, email = self.__criptografia.encrypt_mis_datos(clave, email)
+        nonce_nombre, nombre = self.__criptografia.encrypt_mis_datos(clave, nombre)
+        nonce_apellido, apellido = self.__criptografia.encrypt_mis_datos(clave, apellido)
         self.cursor.execute("INSERT INTO usuarios VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
                             (dni, hash_contraseña, salt_contraseña, salt_clave, telefono, nonce_telefono, email,
                             nonce_email, nombre, nonce_nombre, apellido, nonce_apellido))

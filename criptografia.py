@@ -9,13 +9,13 @@ from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 class Cripto: 
 ############### GENERACIÓN Y VERIFICACIÓN DE LA CONTRASEÑA ###################
     @staticmethod
-    def generar_contraseña(contraseña:str) -> (str, str):
+    def generar_contraseña(contraseña: str):
         """Generamos la contraseña que se guardará en la base de datos"""
         #A continuación generamos un salt aleatorio para cada contraseña
         salt = os.urandom(16)
         kdf = Scrypt(
             salt = salt,
-            legnth = 256,
+            length = 256,
             n = 2**15,
             r = 8,
             p=1 )
@@ -49,10 +49,10 @@ class Cripto:
         """Derivamos la clave de la contraseña por pimera vez"""
         salt = os.urandom(16)
         kdf = PBKDF2HMAC(
-            algoritmo = hashes.SHA256(),
-            longitud = 32,
+            algorithm = hashes.SHA256(),
+            length = 32,
             salt = salt,
-            iteraciones = 480000
+            iterations = 480000
         )
         #Derivamos la clave de la contraseña
         clave = kdf.derive(bytes(contraseña, encoding="utf8"))
@@ -67,7 +67,7 @@ class Cripto:
             algoritmo = hashes.SHA256(),
             longitud = 32,
             salt = salt,
-            iteraciones = 480000
+            iterations = 480000
         )
         #Derivamos la clave con la contraseña y el salt
         clave = kdf.derive(bytes(contraseña, encoding="utf8"))
@@ -78,12 +78,12 @@ class Cripto:
     @staticmethod
     def encrypt_mis_datos(clave:str, datos:str):
         """ Enciptamos mis datos dada una clave y devolvemos nonce """
-        clave = base64.decodebytes(bytes(clave, endoing="utf8"))
+        clave = base64.decodebytes(bytes(clave, encoding="utf8"))
         datos = bytes(datos, encoding="utf8")
         chacha = ChaCha20Poly1305(clave)
         nonce = os.urandom(12)
         ct = chacha.encrypt(nonce, datos, None)
-        return base64.encodebytes(nonce.decode("utf8", base64.encodebytes(ct).decode("utf8")))
+        return base64.encodebytes(nonce).decode("utf8"), base64.encodebytes(ct).decode("utf8")
 
 
     @staticmethod

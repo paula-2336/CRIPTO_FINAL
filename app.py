@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, render_template, url_for, g, flash, session
 from Base_de_Datos import BaseDatos
-from werkzeug.security import generate_password_hash, check_password_hash
+from criptografia import Cripto
 import sqlite3
 
 app = Flask(__name__)
@@ -9,14 +9,15 @@ bd = BaseDatos()
 
 #////////RUTA REDENRIZAR INDEX.HTML////////
 @app.route('/')
+@app.route('/index.html')
 def home_page():
     return render_template('index.html')
 
 # Conexión a la base de datos
-def get_db_connection():
-    conn = sqlite3.connect('usuarios.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+# def get_db_connection():
+#    conn = sqlite3.connect('test.db')
+ #   conn.row_factory = sqlite3.Row
+  #  return conn
 
 #/////////////////////////INICIAR SESION///////////////////////
 @app.route('/login.html', methods=['GET', 'POST'])
@@ -25,8 +26,9 @@ def login():
         dni = request.form['dni']
         password = request.form['password']
 
-        if valid_credentials(dni, password):
+        if bd.validar_usuario(dni, password):
             # Inicia la sesión si las credenciales son correctas
+            # TODO guradar la clave para desencriptar los datos
             session['logged_in'] = True
             session['dni'] = dni  # Guardamos el DNI en la sesión
             flash('Inicio de sesión exitoso', 'success')
@@ -37,15 +39,11 @@ def login():
     return render_template('login.html')
 
 # Función para validar credenciales
-def valid_credentials(dni, password):
-    conn = get_db_connection()
-    user = conn.execute("SELECT password_hash FROM usuarios WHERE dni = ?", (dni,)).fetchone()
-    conn.close()
-
-    if user:
-        stored_password_hash = user['password_hash']
-        return check_password_hash(stored_password_hash, password)  # Comparar el hash
-    return False
+# def valid_credentials(dni, password):
+#     if bd.validar_usuario(dni, password):
+#         stored_password_hash = user['password_hash']
+#         return check_password_hash(stored_password_hash, password)  # Comparar el hash
+#     return False
 
 #////////////////////////REGISTRO DE USUARIO////////////////////////
 @app.route('/register.html', methods=['GET','POST'])
@@ -58,12 +56,9 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        # Hash de la contraseña antes de almacenar
-        password_hash = generate_password_hash(password)
-        
         # Registrar el nuevo usuario en la base de datos
-        clave = bd.nuevo_usuario(dni, password_hash, contacto, email, nombre, apellidos)
-
+        clave = bd.nuevo_usuario(dni, password, contacto, email, nombre, apellidos)
+        # TODO guardar la clave para desencriptar los datos
         return redirect(url_for('registro_exitoso'))  
         
     return render_template('register.html')
@@ -106,6 +101,7 @@ def historial_transferencias():
         return render_template('historial_trans.html', session_iniciada=False)
 
     dni = session['dni']
+    # TODO Usar la clase db que ya tiene las funciones
     conn = get_db_connection()
     transferencias_enviadas = conn.execute("SELECT fecha, id_cuenta_destino AS cuenta_destino, cantidad, concepto FROM transferencias WHERE id_cuenta_origen = ?", (dni,)).fetchall()
     transferencias_recibidas = conn.execute("SELECT fecha, id_cuenta_origen AS cuenta_origen, cantidad, concepto FROM transferencias WHERE id_cuenta_destino = ?", (dni,)).fetchall()
@@ -122,6 +118,7 @@ def historial_transferencias():
 def logout():
     session.pop('logged_in', None)
     session.pop('dni', None)  # Eliminar el DNI de la sesión
+    # TODO eliminar la clave de la sesión
     return redirect("/login.html")
 
 if __name__ == '__main__':
