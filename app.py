@@ -114,10 +114,30 @@ def historial_transferencias():
         session_iniciada=True
     )
 
+#/////CONSULTAR MIS DATOS/////
+@app.route('/mis_datos.html')
+def mid_datos():
+    print(session.get('logged_in'))
+    if not session.get('logged_in'):
+        print("holaaa")
+        return render_template('mis_datos.html', session_iniciada=False)
+
+    dni = session['dni']
+    # TODO Usar la clase db que y  a tiene las funciones
+    consulta_mis_datos = bd.vista_usuario(dni)
+   
+
+    return render_template(
+        'mis_datos.html',
+        mis_datos = consulta_mis_datos,
+        session_iniciada=True
+    )
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     session.pop('dni', None)  # Eliminar el DNI de la sesión
+    session.pop('clave', None)
     # TODO eliminar la clave de la sesión
     return redirect("/login.html")
 

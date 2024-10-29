@@ -81,7 +81,7 @@ class BaseDatos:
     def vista_usuario(self, dni):
         """Esta funcion devuelve toda la información pertinente dado un usuario"""
         #Creamos la consulta sql y devolvemos todo lo que recoge la vista del usuario
-        vista = list(self.cursor.execute("SELECT * FROM usuarios WHERE dni_usuario = ?;", (dni,)))
+        vista = list(self.cursor.execute("SELECT dni_usuario, nombre, apellido, email, telefono FROM usuarios WHERE dni_usuario = ?;", (dni,)))
         return vista[0]
 
     def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto):
@@ -91,12 +91,12 @@ class BaseDatos:
 
     def transferencias_enviadas(self, dni):
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
-        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
+        vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_destino, monto, concepto FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
         return vista
 
     def transferencias_recibidas(self, dni):
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
-        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
+        vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_origen, monto, concepto FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
         return vista
 
 
