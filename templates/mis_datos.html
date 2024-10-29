@@ -99,16 +99,6 @@
     </nav>
     <h1>Datos de Registro</h1>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash-message">
-          {% for message in messages %}
-            <p>{{ message }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
     {% if not session_iniciada %}
     <div class="message">
         <p>Por favor, <a href="login.html">inicia sesión</a> para ver tus datos.</p>
@@ -120,7 +110,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Usuario</th>
+                        <th>DNI</th>
                         <th>Nombre</th>
                         <th>Apellido</th>
                         <th>Email</th>
@@ -128,15 +118,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for usuario in usuarios %}
                     <tr>
-                        <td>{{ usuario.id }}</td>
-                        <td>{{ usuario.nombre }}</td>
-                        <td>{{ usuario.apellido }} €</td>
-                        <td>{{ usuario.email }}</td>
-                        <td>{{ usuario.telefono }}</td>
+                        <td>{{ mis_datos[0] }}</td>
+                        <td>{{ mis_datos[1] }}</td>
+                        <td>{{ mis_datos[2] }} €</td>
+                        <td>{{ mis_datos[3] }}</td>
+                        <td>{{ mis_datos[4] }}</td>
                     </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>

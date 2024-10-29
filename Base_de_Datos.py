@@ -55,13 +55,13 @@ class BaseDatos:
         """Añadimos un nuevo usuario a la base de datos siempre y cuando proporcione los requisitos necesarios"""
         salt_contraseña, hash_contraseña = self.__criptografia.generar_contraseña(contraseña)
         salt_clave, clave = self.__criptografia.prim_deriv_clave_contraseña(contraseña)
-        nonce_telefono, telefono = self.__criptografia.encrypt_mis_datos(clave, telefono)
-        nonce_email, email = self.__criptografia.encrypt_mis_datos(clave, email)
-        nonce_nombre, nombre = self.__criptografia.encrypt_mis_datos(clave, nombre)
-        nonce_apellido, apellido = self.__criptografia.encrypt_mis_datos(clave, apellido)
+        nonce_telefono, telefono_encriptado = self.__criptografia.encrypt_mis_datos(clave, telefono)
+        nonce_email, email_encriptado = self.__criptografia.encrypt_mis_datos(clave, email)
+        nonce_nombre, nombre_encriptado = self.__criptografia.encrypt_mis_datos(clave, nombre)
+        nonce_apellido, apellido_encriptado = self.__criptografia.encrypt_mis_datos(clave, apellido)
         self.cursor.execute("INSERT INTO usuarios VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
-                            (dni, hash_contraseña, salt_contraseña, salt_clave, telefono, nonce_telefono, email,
-                            nonce_email, nombre, nonce_nombre, apellido, nonce_apellido))
+                            (dni, hash_contraseña, salt_contraseña, salt_clave, telefono_encriptado, nonce_telefono, email_encriptado,
+                            nonce_email, nombre_encriptado, nonce_nombre, apellido_encriptado, nonce_apellido))
         self.conexion.commit()
         return clave
 
@@ -73,7 +73,7 @@ class BaseDatos:
         vista = list(self.cursor.execute("SELECT dni_usuario, hash_contraseña, salt_contraseña, salt_clave FROM usuarios WHERE dni_usuario = ?;", (dni,)))
         #A continuación comprobamos que dichos datos son correctos (requerimos el salt de la contraseña y la clave)
         if self.__criptografia.validar_contraseña(contraseña, vista[0][2], vista[0][1]):
-            return self.__criptografia.deriv_clave_contraseña(vista[0][2], contraseña)
+            return self.__criptografia.deriv_clave_contraseña(vista[0][3], contraseña)
         return False
 
 

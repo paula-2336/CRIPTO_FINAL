@@ -60,6 +60,9 @@ def register():
 
         # Registrar el nuevo usuario en la base de datos
         clave = bd.nuevo_usuario(dni, password, contacto, email, nombre, apellidos)
+        session['logged_in'] = True
+        session['dni'] = dni  # Guardamos el DNI en la sesión
+        session['clave'] = clave
         # TODO guardar la clave para desencriptar los datos
         return redirect(url_for('registro_exitoso'))  
         
@@ -109,7 +112,6 @@ def historial_transferencias():
 
     dni = session['dni']
     clave = session['clave']
-    # TODO Usar la clase db que y  a tiene las funciones
     transferencias_enviadas = bd.transferencias_enviadas(dni)
     transferencias_recibidas = bd.transferencias_recibidas(dni)
 
@@ -143,7 +145,7 @@ def logout():
     session.pop('logged_in', None)
     session.pop('dni', None)  # Eliminar el DNI de la sesión
     session.pop('clave', None)
-    return redirect("/login.html")
+    return redirect("/index.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
