@@ -23,7 +23,6 @@ def home_page():
 @app.route('/login.html', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        print(request.form)
         dni = request.form['dni']
         password = request.form['password']
         clave = bd.validar_usuario(dni, password)
@@ -117,16 +116,14 @@ def historial_transferencias():
 #/////CONSULTAR MIS DATOS/////
 @app.route('/mis_datos.html')
 def mid_datos():
-    print(session.get('logged_in'))
     if not session.get('logged_in'):
-        print("holaaa")
         return render_template('mis_datos.html', session_iniciada=False)
 
     dni = session['dni']
     # TODO Usar la clase db que y  a tiene las funciones
     consulta_mis_datos = bd.vista_usuario(dni)
    
-
+    print(consulta_mis_datos)
     return render_template(
         'mis_datos.html',
         mis_datos = consulta_mis_datos,

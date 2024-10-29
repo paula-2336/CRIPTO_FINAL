@@ -78,11 +78,15 @@ class BaseDatos:
 
 
     ############### POSIBLES CONSULTAS DE UN USUARIO ###################
-    def vista_usuario(self, dni):
+    def vista_usuario(self, dni, clave, nonce):
         """Esta funcion devuelve toda la información pertinente dado un usuario"""
         #Creamos la consulta sql y devolvemos todo lo que recoge la vista del usuario
         vista = list(self.cursor.execute("SELECT dni_usuario, nombre, apellido, email, telefono FROM usuarios WHERE dni_usuario = ?;", (dni,)))
-        return vista[0]
+        datos_desencriptados = []
+        for dato in vista[0]:
+            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
+            datos_desencriptados.append(dato_desencriptado)
+        return datos_desencriptados
 
     def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto):
         """Función que añade una nueva transferencia a la bd de transferencias"""
