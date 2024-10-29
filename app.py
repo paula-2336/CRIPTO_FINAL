@@ -6,6 +6,7 @@ import sqlite3
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 bd = BaseDatos()
+cripto = Cripto()
 
 #////////RUTA REDENRIZAR INDEX.HTML////////
 @app.route('/')
@@ -115,13 +116,14 @@ def historial_transferencias():
 
 #/////CONSULTAR MIS DATOS/////
 @app.route('/mis_datos.html')
-def mid_datos():
+def mis_datos():
     if not session.get('logged_in'):
         return render_template('mis_datos.html', session_iniciada=False)
 
     dni = session['dni']
+    clave = session['clave']
     # TODO Usar la clase db que y  a tiene las funciones
-    consulta_mis_datos = bd.vista_usuario(dni)
+    consulta_mis_datos = bd.vista_usuario(dni, clave)
    
     print(consulta_mis_datos)
     return render_template(
