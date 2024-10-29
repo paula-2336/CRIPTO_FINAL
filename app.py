@@ -103,9 +103,10 @@ def historial_transferencias():
         return render_template('historial_trans.html', session_iniciada=False)
 
     dni = session['dni']
+    clave = session['clave']
     # TODO Usar la clase db que y  a tiene las funciones
-    transferencias_enviadas = bd.transferencias_enviadas(dni)
-    transferencias_recibidas = bd.transferencias_recibidas(dni)
+    transferencias_enviadas = bd.transferencias_enviadas(dni, clave )
+    transferencias_recibidas = bd.transferencias_recibidas(dni, clave)
 
     return render_template(
         'historial_trans.html',

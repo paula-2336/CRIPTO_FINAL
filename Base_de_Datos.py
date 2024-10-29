@@ -78,13 +78,14 @@ class BaseDatos:
 
 
     ############### POSIBLES CONSULTAS DE UN USUARIO ###################
-    def vista_usuario(self, dni, clave, nonce):
+    def vista_usuario(self, dni, clave):
         """Esta funcion devuelve toda la información pertinente dado un usuario"""
         #Creamos la consulta sql y devolvemos todo lo que recoge la vista del usuario
-        vista = list(self.cursor.execute("SELECT dni_usuario, nombre, apellido, email, telefono FROM usuarios WHERE dni_usuario = ?;", (dni,)))
-        datos_desencriptados = []
-        for dato in vista[0]:
-            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
+        vista = list(self.cursor.execute("SELECT nombre, apellido, email, telefono, nonce_nombre, nonce_apellido, nonce_email, nonce_telefono FROM usuarios WHERE dni_usuario = ?;", (dni,)))
+        datos_desencriptados = [dni]
+        datos, nonces = vista[0][:4], vista[0][4:]
+        for i in range(len(datos)):
+            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonces[i], datos[i])
             datos_desencriptados.append(dato_desencriptado)
         return datos_desencriptados
 
@@ -93,19 +94,23 @@ class BaseDatos:
         self.cursor.execute("INSERT INTO transferencias(id_cuenta_origen, id_cuenta_destino, monto, concepto) VALUES(?,?,?,?);", (remitente, beneficiario, cantidad, concepto))
         self.conexion.commit()
 
-    def transferencias_enviadas(self, dni, clave, nonce):
+    def transferencias_enviadas(self, dni, clave):
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
         vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_destino, monto, concepto FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
+        datos_desencriptados = []
         for dato in vista[0]:
             dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
             datos_desencriptados.append(dato_desencriptado)
         return datos_desencriptados
-        return vista
 
-    def transferencias_recibidas(self, dni, clave, nonce):
+    def transferencias_recibidas(self, dni, clave):
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
         vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_origen, monto, concepto FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
-        return vista
+        datos_desencriptados = []
+        for dato in vista[0]:
+            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
+            datos_desencriptados.append(dato_desencriptado)
+        return datos_desencriptados
 
 
 
