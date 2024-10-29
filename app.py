@@ -23,14 +23,16 @@ def home_page():
 @app.route('/login.html', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        print(request.form)
         dni = request.form['dni']
         password = request.form['password']
-
-        if bd.validar_usuario(dni, password):
+        clave = bd.validar_usuario(dni, password)
+        if clave:
             # Inicia la sesión si las credenciales son correctas
             # TODO guradar la clave para desencriptar los datos
             session['logged_in'] = True
             session['dni'] = dni  # Guardamos el DNI en la sesión
+            session['clave'] = clave # Guardamos la clave
             flash('Inicio de sesión exitoso', 'success')
             return redirect(url_for('historial_transferencias'))  
         else:
@@ -101,12 +103,10 @@ def historial_transferencias():
         return render_template('historial_trans.html', session_iniciada=False)
 
     dni = session['dni']
-    # TODO Usar la clase db que ya tiene las funciones
-    conn = get_db_connection()
-    transferencias_enviadas = conn.execute("SELECT fecha, id_cuenta_destino AS cuenta_destino, cantidad, concepto FROM transferencias WHERE id_cuenta_origen = ?", (dni,)).fetchall()
-    transferencias_recibidas = conn.execute("SELECT fecha, id_cuenta_origen AS cuenta_origen, cantidad, concepto FROM transferencias WHERE id_cuenta_destino = ?", (dni,)).fetchall()
-    conn.close()
-    
+    # TODO Usar la clase db que y  a tiene las funciones
+    transferencias_enviadas = bd.transferencias_enviadas(dni)
+    transferencias_recibidas = bd.transferencias_recibidas(dni)
+
     return render_template(
         'historial_trans.html',
         transferencias_enviadas=transferencias_enviadas,

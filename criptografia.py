@@ -25,12 +25,12 @@ class Cripto:
     @staticmethod
     def validar_contraseña(contraseña:str, salt:str, hash:str) -> bool:
         """Verificamos mediante la clave y el salt que la contraseña es la correcta"""
-        contraseña = bytes(contraseña, encodint='utf8')
+        contraseña = bytes(contraseña, encoding='utf8')
         hash = base64.decodebytes(bytes(hash, encoding = 'utf8'))
         salt = base64.decodebytes(bytes(salt, encoding = 'utf8'))
         kdf = Scrypt(
             salt = salt,
-            legnth = 256,
+            length = 256,
             n = 2**15,
             r = 8,
             p=1 )
@@ -64,11 +64,12 @@ class Cripto:
         """ Derivamos una clave dados una contraseña y un salt"""
         salt = base64.decodebytes(bytes(salt, encoding="utf8"))
         kdf = PBKDF2HMAC(
-            algoritmo = hashes.SHA256(),
-            longitud = 32,
+            algorithm = hashes.SHA256(),
+            length = 32,
             salt = salt,
             iterations = 480000
         )
+
         #Derivamos la clave con la contraseña y el salt
         clave = kdf.derive(bytes(contraseña, encoding="utf8"))
         return base64.encodebytes(clave).decode("utf8")

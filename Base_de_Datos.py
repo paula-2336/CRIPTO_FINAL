@@ -70,7 +70,7 @@ class BaseDatos:
     def validar_usuario(self, dni, contraseña):
         """ Validamos la infromación proporcionada por un usuario en el log-in"""
         #Primero hacemos una vista de los dadtos de autenticación del usuario y los convertimos en una lista
-        vista = list(self.cursor.execute("SELECT dni_usuario, hash_contraseña, salt_contraseña, salt_clave FROM usuarios WHERE dni_usuario =?;", (dni)))
+        vista = list(self.cursor.execute("SELECT dni_usuario, hash_contraseña, salt_contraseña, salt_clave FROM usuarios WHERE dni_usuario = ?;", (dni,)))
         #A continuación comprobamos que dichos datos son correctos (requerimos el salt de la contraseña y la clave)
         if self.__criptografia.validar_contraseña(contraseña, vista[0][2], vista[0][1]):
             return self.__criptografia.deriv_clave_contraseña(vista[0][2], contraseña)
@@ -81,7 +81,7 @@ class BaseDatos:
     def vista_usuario(self, dni):
         """Esta funcion devuelve toda la información pertinente dado un usuario"""
         #Creamos la consulta sql y devolvemos todo lo que recoge la vista del usuario
-        vista = list(self.cursor.execute("SELECT * FROM usuarios WHERE dni_usuario = ?;", (dni)))
+        vista = list(self.cursor.execute("SELECT * FROM usuarios WHERE dni_usuario = ?;", (dni,)))
         return vista[0]
 
     def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto):
@@ -91,12 +91,12 @@ class BaseDatos:
 
     def transferencias_enviadas(self, dni):
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
-        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_origen = ?;", (dni)))
+        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
         return vista
 
     def transferencias_recibidas(self, dni):
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
-        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_destino = ?;", (dni)))
+        vista = list(self.cursor.execute("SELECT * FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
         return vista
 
 
