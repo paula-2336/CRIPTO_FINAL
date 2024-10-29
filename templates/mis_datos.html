@@ -22,6 +22,26 @@
             text-align: center;
         }
 
+        nav a {
+            color: #155724;
+            margin: 10px 15px 0;
+            display: inline-block;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 8px 15px; 
+            border: 2px solid #155724; 
+            border-radius: 5px; 
+            background-color: #e8f5e9; 
+            transition: all 0.3s ease; 
+}
+
+        nav a:hover {
+            color: #fff;
+            background-color: #155724; 
+            border-color: #155724; 
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -74,6 +94,9 @@
     </style>
 </head>
 <body>
+    <nav>
+        <a href="menu.html"> Volver al Menú</a>
+    </nav>
     <h1>Datos de Registro</h1>
 
     {% with messages = get_flashed_messages() %}

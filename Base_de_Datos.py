@@ -94,23 +94,15 @@ class BaseDatos:
         self.cursor.execute("INSERT INTO transferencias(id_cuenta_origen, id_cuenta_destino, monto, concepto) VALUES(?,?,?,?);", (remitente, beneficiario, cantidad, concepto))
         self.conexion.commit()
 
-    def transferencias_enviadas(self, dni, clave):
+    def transferencias_enviadas(self, dni):
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
         vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_destino, monto, concepto FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
-        datos_desencriptados = []
-        for dato in vista[0]:
-            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
-            datos_desencriptados.append(dato_desencriptado)
-        return datos_desencriptados
+        return vista
 
-    def transferencias_recibidas(self, dni, clave):
+    def transferencias_recibidas(self, dni):
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
         vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_origen, monto, concepto FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
-        datos_desencriptados = []
-        for dato in vista[0]:
-            dato_desencriptado = self.__criptografia.decrypt_mis_datos(clave, nonce, dato)
-            datos_desencriptados.append(dato_desencriptado)
-        return datos_desencriptados
+        return vista
 
 
 

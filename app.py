@@ -34,7 +34,7 @@ def login():
             session['dni'] = dni  # Guardamos el DNI en la sesión
             session['clave'] = clave # Guardamos la clave
             flash('Inicio de sesión exitoso', 'success')
-            return redirect(url_for('historial_transferencias'))  
+            return redirect(url_for('menu'))  
         else:
             flash('DNI o contraseña incorrectos', 'error')
 
@@ -68,6 +68,11 @@ def register():
 @app.route('/registro_exitoso')
 def registro_exitoso():
     return render_template('registro_exitoso.html')
+
+#////////////////////////ACCESO A MENU////////////////////////
+@app.route('/menu.html', methods=['GET','POST'])
+def menu():
+        return render_template('menu.html')
 
 #////////////////////////HACER TRANSFERENCIA////////////////////////
 @app.route('/transferencia.html', methods=['GET', 'POST'])
@@ -105,8 +110,8 @@ def historial_transferencias():
     dni = session['dni']
     clave = session['clave']
     # TODO Usar la clase db que y  a tiene las funciones
-    transferencias_enviadas = bd.transferencias_enviadas(dni, clave )
-    transferencias_recibidas = bd.transferencias_recibidas(dni, clave)
+    transferencias_enviadas = bd.transferencias_enviadas(dni)
+    transferencias_recibidas = bd.transferencias_recibidas(dni)
 
     return render_template(
         'historial_trans.html',
@@ -123,7 +128,7 @@ def mis_datos():
 
     dni = session['dni']
     clave = session['clave']
-    # TODO Usar la clase db que y  a tiene las funciones
+    print(clave)
     consulta_mis_datos = bd.vista_usuario(dni, clave)
    
     print(consulta_mis_datos)
@@ -138,7 +143,6 @@ def logout():
     session.pop('logged_in', None)
     session.pop('dni', None)  # Eliminar el DNI de la sesión
     session.pop('clave', None)
-    # TODO eliminar la clave de la sesión
     return redirect("/login.html")
 
 if __name__ == '__main__':

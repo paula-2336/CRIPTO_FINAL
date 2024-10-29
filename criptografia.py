@@ -93,6 +93,7 @@ class Cripto:
         clave = base64.decodebytes(bytes(clave, encoding ="utf8"))
         nonce = base64.decodebytes(bytes(nonce, encoding = "utf8"))
         datos = base64.decodebytes(bytes(datos, encoding ="utf8"))
+
         #Procedemos a la desencriptación:
         chacha = ChaCha20Poly1305(clave)
         res = chacha.decrypt(nonce, datos, None)
