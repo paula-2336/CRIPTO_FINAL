@@ -75,7 +75,19 @@ def registro_exitoso():
 #////////////////////////ACCESO A MENU////////////////////////
 @app.route('/menu.html', methods=['GET','POST'])
 def menu():
-        return render_template('menu.html')
+    if not session.get('logged_in'):
+        return render_template('menu.html', session_iniciada=False)
+
+    dni = session['dni']
+    clave = session['clave']
+    print(clave)
+    consulta_mis_datos = bd.vista_usuario(dni, clave)
+    return render_template(
+        'menu.html',
+        nombre_usuario = consulta_mis_datos[1],
+        session_iniciada=True
+    )
+
 
 #////////////////////////HACER TRANSFERENCIA////////////////////////
 @app.route('/transferencia.html', methods=['GET', 'POST'])
@@ -133,7 +145,6 @@ def mis_datos():
     print(clave)
     consulta_mis_datos = bd.vista_usuario(dni, clave)
    
-    print(consulta_mis_datos)
     return render_template(
         'mis_datos.html',
         mis_datos = consulta_mis_datos,
