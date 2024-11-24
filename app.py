@@ -2,6 +2,10 @@ from flask import Flask, request, redirect, render_template, url_for, g, flash, 
 from Base_de_Datos import BaseDatos
 from criptografia import Cripto
 import sqlite3
+import smtplib
+import random
+from dotenv import load_dotenv
+import ssl
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -47,6 +51,42 @@ def login():
 #         return check_password_hash(stored_password_hash, password)  # Comparar el hash
 #     return False
 
+
+
+#////////////////////////ENVIAR MAIL CON CODIGO VERIFICACION////////////////////////
+
+def send_mail(username):
+    try:
+        load_dotenv()
+        email_reciver = to
+        password = os.getenv("PASSWORD")
+        email_sender = "100472336@alumnos.uc3m.es"
+        email_subject = "Confirmacion de correo"
+
+        # Creamos el mensaje
+        mensaje = EmailMessage()
+        mensaje['Subject'] = email_subject
+        mensaje['From'] = email_sender
+        mensaje['To'] = email_reciver
+
+        #Generamos un codigo de 6 digitos que utilizaremos como codigo de verificacion
+        codigo_v = random.randint(100000, 999999)
+        mensaje_codigo = str("Codigo de verificacion: " + str(codigo_v) + "\n")
+        mensaje.set_content(mensaje_codigo)
+        context = ssl.create_default_context()
+
+        # Enviamos el mensaje
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
+            smtp.login(email_sender, password)
+            smtp.sendmail(email_sender, email_reciver, mensaje.as_string())
+
+        # Retornamos el codigo de verificacion, para su posterior comprobacion
+        return codigo_v
+    
+     #en caso de error al enviar el correo:
+    except Exception as e:
+        print(f"Error al enviar el correo: {e}")
+
 #////////////////////////REGISTRO DE USUARIO////////////////////////
 @app.route('/register.html', methods=['GET','POST'])
 def register():
@@ -58,13 +98,29 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        # Registrar el nuevo usuario en la base de datos
-        clave = bd.nuevo_usuario(dni, password, contacto, email, nombre, apellidos)
-        session['logged_in'] = True
-        session['dni'] = dni  # Guardamos el DNI en la sesión
-        session['clave'] = clave
-        # TODO guardar la clave para desencriptar los datos
-        return redirect(url_for('registro_exitoso'))  
+        if dni in bd.get_usuarios():
+            flash('El DNI ya está registrado. Por favor, inicia sesión.', 'error')
+            return redirect("\login.html")
+        else:
+            # Registrar el nuevo usuario en la base de datos
+            clave = bd.nuevo_usuario(dni, password, contacto, email, nombre, apellidos)
+            session['logged_in'] = True
+            session['dni'] = dni  # Guardamos el DNI en la sesión
+            session['clave'] = clave
+            # TODO guardar la clave para desencriptar los datos
+
+            # Enviar correo de verificación
+            flash('Para terminar de verificar su identidad, se le enviara un codigo de verificacion a su correo')
+            codigo = send_mail(str(email)) # Enviamos el correo
+            codigo_v = flash(input("Ingrese el codigo de verificacion: "))
+            if codigo_v != codigo:
+                flash('Codigo incorrecto')
+                return redirect("\register.html")
+            else:
+                 flash('Usuario registrado con éxito')
+                 return redirect('\registro_exitoso')
+            
+              
         
     return render_template('register.html')
 
