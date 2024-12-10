@@ -108,7 +108,7 @@ class Cripto:
 
     ############### IMPLEMENTACIÓN DE RSA ###################
     def generar_clave_privado_y_publica(self, contraseña, dni):
-        # Creamos un direcotorio para guarda los certificados del usuario
+        # Creamos un directorio para guardar los certificados del usuario
         os.mkdir(f"./Certificados/Usuarios/{dni}")
         # generamos la contraseña privada
         contraseña = bytes(contraseña, encoding="utf8")
@@ -118,7 +118,7 @@ class Cripto:
             key_size=2048
         )
 
-        # La guardamos en un archivo encriptada con la contraseña del usuario
+        # La guardamos en un archivo encriptado con la contraseña del usuario
         with open(f"./Certificados/Usuarios/{dni}/{dni}-key.pem", "wb") as f:
             f.write(clave_privada.private_bytes(
                 encoding=serialization.Encoding.PEM,
@@ -126,13 +126,13 @@ class Cripto:
                 encryption_algorithm=serialization.BestAvailableEncryption(contraseña),
             ))
 
-        # Generamos la requeste de firmar el certificado
+        # Generamos la request de firmar el certificado
         self.generate_csr(clave_privada, dni)
         self.generate_pem(dni)
     
     @staticmethod
     def generate_csr(private_key, dni):
-        # Generamos la requeste de firmar el certificado del usuario
+        # Generamos la request de firmar el certificado del usuario
         csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "MADRID"),
@@ -140,7 +140,7 @@ class Cripto:
             x509.NameAttribute(NameOID.COMMON_NAME, "vanguard_trust_bank.com"),
         ])).sign(private_key, hashes.SHA256())
 
-        # Guardamos la request en el direcotorio de solicitudes
+        # Guardamos la request en el directorio de solicitudes
         with open(f"./Certificados/VanguardTrustBank/solicitudes/{dni}-csr.pem", "wb") as file:
             file.write(csr.public_bytes(serialization.Encoding.PEM))
 
@@ -163,7 +163,7 @@ class Cripto:
         os.system(f"openssl ca -in ./solicitudes/{dni}-csr.pem -notext -config "
                   f"./openssl-VanguardTrustBank.conf --passin pass:{contraseña}")
 
-        # Copiamos el certificado del usuario a su directoio
+        # Copiamos el certificado del usuario a su directorio
         os.system(f"cp ./nuevoscerts/{file_data[:-1]}.pem "
                   f"../Usuarios/{dni}/{dni}-cert.pem")
 
@@ -217,7 +217,7 @@ class Cripto:
 
         return (base64.encodebytes(datos_remitente).decode("utf8"), base64.encodebytes(datos_beneficiario).decode("utf8"))
 
-
+    # Función que desencripta el asunto de un mensaje
     def desencriptar_asunto(self, dni, contraseña_clave_privada, asunto_ecnriptado):
         with open(f"./Certificados/Usuarios/{dni}/{dni}-key.pem", "rb") as archivo_pem:
             datos_pem = archivo_pem.read()
