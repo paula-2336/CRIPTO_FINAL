@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Usuario</title>
+    <title>Registro de Usuario</title>
     <style>
         /* Estilos generales */
         body {
@@ -15,6 +15,13 @@
             flex-direction: column;
             justify-content: space-between;
             min-height: 100vh;
+        }
+
+        h1 {
+            color: #004d40;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
         /* Estilo del menú de navegación */
@@ -37,47 +44,47 @@
             color: #80cbc4;
         }
 
-        h1 {
-            color: #004d40;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-
         /* Contenedor central */
         .container {
             background-color: white;
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
             width: 300px;
             margin: auto;
+            text-align: center;
         }
 
-        /* Estilos para la lista de opciones */
-        ul {
-            list-style: none;
-            padding: 0;
+        form {
+            margin-bottom: 20px;
         }
 
-        li {
-            margin-bottom: 10px;
-        }
-
-        /* Estilos para los enlaces de opciones */
-        a.option {
+        label, input {
             display: block;
-            background-color: #004d40;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
+            width: 100%;
             margin: 10px 0;
+            font-size: 1rem;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], input[type="tel"] {
+            padding: 8px;
+            border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1rem;
+        }
+
+        input[type="submit"] {
+            background-color: #004d40;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
             transition: background-color 0.3s ease;
         }
 
-        a.option:hover {
+        input[type="submit"]:hover {
             background-color: #00796b;
         }
 
@@ -87,34 +94,27 @@
             color: white;
             text-align: center;
             padding: 20px 0;
-            margin-top: 20px;
+            width: 100%;
         }
 
         footer p {
             margin: 5px 0;
+            font-size: 0.9rem;
         }
     </style>
 </head>
-<body>
-    <!-- Menú de navegación -->
-    <nav>
-        <a href="index.html">Inicio</a>
-        <a href="/login">Iniciar Sesion</a>
-        <a href="historial_trans.html">Historial de Transacciones</a>
-        <a href="mis_datos.html">Mis Datos</a>
-    </nav>
-
-    
+<body>  
     <div class="container">
-        <h1>Bienvenido, {{ username }}</h1>
-        <ul>
-            <li><a class="option" href="transferencia.html">Transferir dinero</a></li>
-            <li><a class="option" href="historial_trans.html">Historial de Transacciones</a></li>
-            <li><a class="option" href="mis_datos.html">Mis Datos</a></li>
-        </ul>
+        <h1>Crear cuenta</h1>
+        <form action="crear_cuenta" method="POST">
+            <label for="cuenta">Nombre cuenta:</label>
+            <input type="text" name="cuenta" required>
+            <input type="submit" value="Crear_cuenta">
+        </form>
+        <a href="menu.html">Volver al menu</a>
     </div>
 
-    
+   
     <footer>
         <p>Vanguard Trust Bank</p>
         <p>Dirección: Av. de la Libertad 123, Ciudad Financiera</p>
@@ -123,4 +123,3 @@
     </footer>
 </body>
 </html>
-

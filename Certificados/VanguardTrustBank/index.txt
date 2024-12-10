@@ -1,0 +1,2 @@
+V	251210012250Z		01	unknown	/C=ES/ST=MADRID/O=0123456789A/CN=vanguard_trust_bank.com
+V	251210012330Z		02	unknown	/C=ES/ST=MADRID/O=9876543210Z/CN=vanguard_trust_bank.com

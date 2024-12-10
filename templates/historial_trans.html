@@ -28,24 +28,24 @@
             margin-top: 10px;
         }
 
+        /* Estilos de navegación */
+        nav {
+            background-color: #004d40;
+            padding: 10px;
+            text-align: center;
+        }
+
         nav a {
-            color: #155724;
-            margin: 10px 15px 0;
-            display: inline-block;
+            color: white;
+            margin: 0 15px;
             text-decoration: none;
             font-size: 1.1rem;
             font-weight: bold;
-            padding: 8px 15px; 
-            border: 2px solid #155724; 
-            border-radius: 5px; 
-            background-color: #e8f5e9; 
-            transition: all 0.3s ease; 
-}
+            transition: color 0.3s ease;
+        }
 
         nav a:hover {
-            color: #fff;
-            background-color: #155724; 
-            border-color: #155724; 
+            color: #b2dfdb;
         }
 
         table, th, td {
@@ -95,25 +95,43 @@
 </head>
 <body>
     <nav>
-        <a href="menu.html"> Volver al Menú</a>
+        <a href="../menu.html">Inicio</a>
+        <a href="../cuentas.html">Cuentas</a>
+        <a href="../transferencia.html">Realizar Transferencia</a>
     </nav>
-    <h1>Historial de Transferencias</h1>
-
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash-message">
-          {% for message in messages %}
-            <p>{{ message }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
+    <h1>Datos cuenta</h1>
     {% if not session_iniciada %}
     <div class="message">
-        <p>Por favor, <a href="login.html">inicia sesión</a> para ver tu historial de transferencias.</p>
+        <p>Por favor, <a href="../login">inicia sesión</a> para ver tu historial de transferencias.</p>
     </div>
     {% else %}
+        <!-- Saldo -->
+        <div class="section">
+            <h2>Saldo</h2>
+            <p style="font-weight: bold; font-size: 30px;">{{ saldo }} €</p>
+        </div>
+        <!-- Ingresos -->
+        <div class="section">
+            <h2>Ingresos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cantidad</th>
+                        <th>Concepto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingreso in ingresos %}
+                    <tr>
+                        <td>{{ ingreso[0] }}</td>   
+                        <td>{{ ingreso[1] }} €</td>
+                        <td>{{ ingreso[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         <!-- Transferencias Enviadas -->
         <div class="section">
             <h2>Transferencias Enviadas</h2>
@@ -129,10 +147,10 @@
                 <tbody>
                     {% for transferencia in transferencias_enviadas %}
                     <tr>
-                        <td>{{ transferencia.fecha }}</td>
-                        <td>{{ transferencia.cuenta_destino }}</td>
-                        <td>{{ transferencia.cantidad }} €</td>
-                        <td>{{ transferencia.concepto }}</td>
+                        <td>{{ transferencia[0] }}</td>
+                        <td>{{ transferencia[1] }}</td>
+                        <td>{{ transferencia[2] }} €</td>
+                        <td>{{ transferencia[3] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -154,10 +172,10 @@
                 <tbody>
                     {% for transferencia in transferencias_recibidas %}
                     <tr>
-                        <td>{{ transferencia.fecha }}</td>
-                        <td>{{ transferencia.cuenta_origen }}</td>
-                        <td>{{ transferencia.cantidad }} €</td>
-                        <td>{{ transferencia.concepto }}</td>
+                        <td>{{ transferencia[0] }}</td>
+                        <td>{{ transferencia[1] }}</td>
+                        <td>{{ transferencia[2] }} €</td>
+                        <td>{{ transferencia[3] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

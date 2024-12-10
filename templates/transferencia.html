@@ -61,7 +61,7 @@
 
         input[type="text"],
         input[type="number"],
-        textarea {
+        textarea, select , #cuenta_destino{
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -107,20 +107,28 @@
 <body>
     <!-- Menú de navegación -->
     <nav>
-        <a href="index.html">Inicio</a>
-        <a href="register.html">Registrarse</a>
-        <a href="historial_trans.html">Historial de Transacciones</a>
+        <a href="menu.html">Inicio</a>
+        <a href="mis_datos.html">Registrarse</a>
+        <a href="cuentas.html">Cuentas</a>
     </nav>
 
     <!-- Formulario de transferencia -->
     <div class="container">
         <h1>Realizar Transferencia</h1>
-        <form action="procesar_transferencia.html" method="POST">
-            <label for="cuenta_origen">Cuenta de Origen:</label>
-            <input type="text" id="cuenta_origen" name="cuenta_origen" required>
+        <form action="transferencia.html" method="POST">
+            <select id="cuenta_origen" name="cuenta_origen" required>
+                {% for cuenta in cuentas %}
+                    <option value="{{ cuenta[0] }}">{{ cuenta[1] }} - {{ cuenta[0]}}</option>
+                {% endfor %} 
+            </select>
 
             <label for="cuenta_destino">Cuenta de Destino:</label>
-            <input type="text" id="cuenta_destino" name="cuenta_destino" required>
+            <input list="cuentas_destino" type="text" id="cuenta_destino" name="cuenta_destino" required>
+            <datalist id="cuentas_destino">
+                {% for cuenta in cuentas %}
+                    <option value="{{ cuenta[0] }}">{{ cuenta[1] }}</option>
+                {% endfor %}
+            </datalist>
 
             <label for="cantidad">Cantidad:</label>
             <input type="number" id="cantidad" name="cantidad" step="0.01" required>

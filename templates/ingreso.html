@@ -3,31 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio de Sesión</title>
+    <title>Realizar Transferencia</title>
     <style>
-        /* Estilos generales */
         body {
             font-family: Arial, sans-serif;
-            background-color: #e0f7fa; /* Fondo azul clarito */
-            margin: 0;
-            padding: 0;
+            background-color: #e0f7fa;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             min-height: 100vh;
+            margin: 0;
         }
 
-        h1 {
-            color: #004d40;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        /* Estilo del menú de navegación */
+        /* Estilos de navegación */
         nav {
             background-color: #004d40;
-            padding: 10px 0;
+            padding: 10px;
             text-align: center;
         }
 
@@ -41,33 +31,40 @@
         }
 
         nav a:hover {
-            color: #80cbc4;
+            color: #b2dfdb;
         }
 
-        /* Contenedor central */
+        /* Contenedor principal */
         .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            margin: auto;
+            width: 400px;
+            margin: 20px auto;
             text-align: center;
         }
 
-        form {
+        h1 {
+            color: #004d40;
+            font-size: 1.8rem;
             margin-bottom: 20px;
         }
 
-        label, input {
+        label {
             display: block;
-            width: 100%;
-            margin: 10px 0;
+            margin-top: 15px;
+            color: #555;
             font-size: 1rem;
+            text-align: left;
         }
 
-        input[type="text"], input[type="password"] {
-            padding: 8px;
+        input[type="text"],
+        input[type="number"],
+        textarea, select , #cuenta_destino{
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1rem;
@@ -78,6 +75,7 @@
             color: white;
             border: none;
             padding: 10px;
+            margin-top: 20px;
             border-radius: 5px;
             font-size: 1rem;
             cursor: pointer;
@@ -88,42 +86,53 @@
             background-color: #00796b;
         }
 
-        /* Estilos del footer */
+        /* Estilos de pie de página */
         footer {
             background-color: #004d40;
             color: white;
             text-align: center;
-            padding: 20px 0;
+            padding: 10px 0;
+            position: relative;
+            bottom: 0;
             width: 100%;
+            font-size: 0.9rem;
+            margin-top: auto;
         }
 
         footer p {
             margin: 5px 0;
-            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-   
+    <!-- Menú de navegación -->
     <nav>
-        <a href="index.html">Inicio</a>
-        <a href="/register">Registrarse</a>
+        <a href="menu.html">Inicio</a>
+        <a href="mis_datos.html">Registrarse</a>
+        <a href="cuentas.html">Cuentas</a>
     </nav>
 
-    
+    <!-- Formulario de transferencia -->
     <div class="container">
-        <h1>Iniciar Sesión</h1>
-        <form action="{{ url_for('login') }}" method="POST">
-            <label for="dni">Dni:</label>
-            <input type="text" name="dni" required>
-            <label for="password">Contraseña:</label>
-            <input type="password" name="password" required>
-            <input type="submit" value="Iniciar Sesión">
+        <h1>Realizar Ingreso</h1>
+        <form action="ingreso.html" method="POST">
+            <select id="cuenta" name="cuenta" required>
+                {% for cuenta in cuentas %}
+                    <option value="{{ cuenta[0] }}">{{ cuenta[1] }} - {{ cuenta[0]}}</option>
+                {% endfor %} 
+            </select>
+
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" id="cantidad" name="cantidad" step="0.01" required>
+
+            <label for="concepto">Concepto:</label>
+            <textarea id="concepto" name="concepto" rows="3" required></textarea>
+
+            <input type="submit" value="Realizar Ingreso">
         </form>
-        <a href="index.html">Volver al inicio</a>
     </div>
 
-    
+    <!-- Pie de página -->
     <footer>
         <p>Vanguard Trust Bank</p>
         <p>Dirección: Av. de la Libertad 123, Ciudad Financiera</p>

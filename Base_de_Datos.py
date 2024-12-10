@@ -1,5 +1,6 @@
 import sqlite3
 from criptografia import Cripto
+import random
 
 class BaseDatos:
 
@@ -34,25 +35,50 @@ class BaseDatos:
                                
                                 );""")
 
-         #Creamos la base de datos de las transferencias:
+
+        #Creamos la base de datos de las cuentas bamcarias:
+        self.cursor.execute("""
+                                CREATE TABLE cuentas (
+                                numero_cuenta CHAR(24) PRIMARY KEY, -- Número de cuenta del usuario
+                                dni_usuario CHAR(20), -- Dni del usuario que tiene la cuenta
+                                nombre_cuenta VARCHAR2(50), -- Nombre de la cuenta
+                                FOREIGN KEY (dni_usuario) REFERENCES usuarios(dni_usuario)
+                                );""")
+
+   
+        #Creamos la base de datos de las transferencias:
         #Decisiones respecto al diseño: varchar(34) por si estamos trabajando con cuentas bancarias internacionales (IBAN)
         #Maximo monto permitido en españa sin declarar
         self.cursor.execute("""
                                 CREATE TABLE transferencias(
-                                id INTEGER PRIMARY KEY AUTOINCREMENT, -- ID único de la transacción
-                                id_cuenta_origen INTEGER, -- Id de la cuenta que envía el dinero
-                                id_cuenta_destino INTEGER, -- Id de la cuenta que recibe el dinero
+                                id_transferencia INTEGER PRIMARY KEY AUTOINCREMENT, -- Id de la transferencia
+                                cuenta_origen CHAR(24) NOT NULL, -- Número de cuenta origen
+                                cuenta_destino CHAR(24) NOT NULL, -- Número de cuenta destino
                                 fecha_transfer DATETIME DEFAULT CURRENT_TIMESTAMP, -- Fecha y Hora en la que se registra la transferencia
                                 monto DECIMAL(5,2) NOT NULL, -- Cantidad de dinero enviado
-                                concepto TEXT, -- Concepto de la transferencia
-                                estado VARCHAR(20) DEFAULT 'PENDIENTE', -- Estado de la transferencia
-                                FOREIGN KEY(id_cuenta_origen) REFERENCES usuarios(dni_usuario),
-                                FOREIGN KEY(id_cuenta_destino) REFERENCES usuarios(dni_usuario)
+                                concepto_origen TEXT, -- Concepto de la transferencia encriptado para el remitente
+                                concepto_destino TEXT,  -- Concepto de la transferencia encriptado para el destinatario
+                                firma TEXT, -- Firma de la transferencia
+                                FOREIGN KEY(cuenta_origen) REFERENCES cuentas(numero_cuenta),
+                                FOREIGN KEY(cuenta_destino) REFERENCES cuentas(numero_cuenta)
                                 );""")
+        
+        self.cursos.execute("""
+                                CREATE TABLE ingresos(
+                                    id_ingreso INTEGER PRIMARY KEY AUTOINCREMENT, -- Id del ingreso
+                                    cuenta CHAR(24) NOT NULL, -- Número de cuenta origen
+                                    fecha_ingreso DATETIME DEFAULT CURRENT_TIMESTAMP, -- Fecha y Hora en la que se registra el ingreso
+                                    monto DECIMAL(5,2) NOT NULL, -- Cantidad de dinero ingresada
+                                    concepto TEXT, -- Concepto del ingreso
+                                    FOREIGN KEY(cuenta) REFERENCES cuentas(numero_cuenta)
+                                );""")
+                            
 
     ############### GENERACIÓN DE UN NUEVO USUARIO ###################                     
     def nuevo_usuario(self, dni, contraseña, telefono, email, nombre, apellido):
         """Añadimos un nuevo usuario a la base de datos siempre y cuando proporcione los requisitos necesarios"""
+        # Creamos un certificado para el usuario
+        self.__criptografia.generar_clave_privado_y_publica(contraseña, dni)
         salt_contraseña, hash_contraseña = self.__criptografia.generar_contraseña(contraseña)
         salt_clave, clave = self.__criptografia.prim_deriv_clave_contraseña(contraseña)
         nonce_telefono, telefono_encriptado = self.__criptografia.encrypt_mis_datos(clave, telefono)
@@ -63,8 +89,25 @@ class BaseDatos:
                             (dni, hash_contraseña, salt_contraseña, salt_clave, telefono_encriptado, nonce_telefono, email_encriptado,
                             nonce_email, nombre_encriptado, nonce_nombre, apellido_encriptado, nonce_apellido))
         self.conexion.commit()
+        self.nueva_cuenta(dni, "Personal")
         return clave
 
+    def nueva_cuenta(self, dni, nombre):
+        """Función que añade una nueva cuenta a la base de datos de cuentas"""
+        self.cursor.execute("INSERT INTO cuentas(dni_usuario, numero_cuenta, nombre_cuenta) VALUES(?,?,?);", (dni, self.generar_cuenta(), nombre))
+        self.conexion.commit()
+
+    def obtener_cuentas(self, dni):
+        """Función que devuelve todas las cuentas de un usuario"""
+        cuentas = list(self.cursor.execute("SELECT numero_cuenta, nombre_cuenta FROM cuentas WHERE dni_usuario = ?;", (dni,)))
+        return cuentas
+
+    def generar_cuenta(self):
+        """Generamos un número de cuenta aleatorio"""
+        cuenta = "ES"
+        for _ in range(22):
+            cuenta += str(random.randint(0,9))
+        return cuenta
 
     ############### VALIDACIÓN DE UN USUARIO ###################
     def validar_usuario(self, dni, contraseña):
@@ -91,18 +134,66 @@ class BaseDatos:
 
     def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto):
         """Función que añade una nueva transferencia a la bd de transferencias"""
-        self.cursor.execute("INSERT INTO transferencias(id_cuenta_origen, id_cuenta_destino, monto, concepto) VALUES(?,?,?,?);", (remitente, beneficiario, cantidad, concepto))
+        # TODO Añadir la encriptación asimetrica del concepto
+        # TODO Firmar la cantidad de la transferencia
+        dni_beneficiario = self.obtener_dueño_cuenta(beneficiario)
+        dni_remitente = self.obtener_dueño_cuenta(remitente)
+        concepto_origen, concepto_destino = self.__criptografia.encriptar_asunto(dni_remitente, dni_beneficiario, concepto)
+        print(concepto_origen, concepto_destino)
+        self.cursor.execute("INSERT INTO transferencias(cuenta_origen, cuenta_destino, monto, concepto_origen, concepto_destino) VALUES(?,?,?,?, ?);", 
+                            (remitente, beneficiario, cantidad, concepto_origen, concepto_destino))
+        print(remitente, beneficiario, cantidad, concepto_origen, concepto_destino)
         self.conexion.commit()
 
-    def transferencias_enviadas(self, dni):
+    def transferencias_enviadas(self, dni, cuenta, contraseña):
+        # TODO Añadir la desencriptación del concepto
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
-        vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_destino, monto, concepto FROM transferencias WHERE id_cuenta_origen = ?;", (dni,)))
+        vista = []
+        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_destino, monto, concepto_origen FROM transferencias WHERE cuenta_origen = ?;", (cuenta,)))
+        if vista[0] != None:
+            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[0][3])
+            vista = [[vista[0][0], vista[0][1], vista[0][2], asunto_descifrado],]
         return vista
 
-    def transferencias_recibidas(self, dni):
+    def transferencias_recibidas(self, dni, cuenta, contraseña):
+        # TODO Añadir la desencriptación del concepto
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
-        vista = list(self.cursor.execute("SELECT fecha_transfer, id_cuenta_origen, monto, concepto FROM transferencias WHERE id_cuenta_destino = ?;", (dni,)))
+        vista = [] 
+        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_origen, monto, concepto_destino FROM transferencias WHERE cuenta_destino = ?;", (cuenta,)))
+        if len(vista) != 0:
+            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[0][3])
+            vista = [[vista[0][0], vista[0][1], vista[0][2], asunto_descifrado],]
         return vista
+    
+    def realizar_ingreso(self, cuenta, cantidad, concepto):
+        """Función que añade un ingreso a la base de datos de ingresos"""
+        self.cursor.execute("INSERT INTO ingresos(cuenta, monto, concepto) VALUES(?,?,?);", (cuenta, cantidad, concepto))
+        self.conexion.commit()
+
+    def ingresos(self, cuenta):
+        """Función que crea una vista de todos los ingresos registrados en una cuenta"""
+        vista = []
+        vista = list(self.cursor.execute("SELECT fecha_ingreso, monto, concepto FROM ingresos WHERE cuenta = ?;", (cuenta,)))
+        return vista
+    
+    def calcular_saldo(self, cuenta):
+        """Función que calcula el saldo de una cuenta"""
+        ingresos = list(self.cursor.execute("SELECT SUM(monto) FROM ingresos WHERE cuenta = ?;", (cuenta,)))
+        transferencias_enviadas = list(self.cursor.execute("SELECT SUM(monto) FROM transferencias WHERE cuenta_origen = ?;", (cuenta,)))
+        transferencias_recibidas = list(self.cursor.execute("SELECT SUM(monto) FROM transferencias WHERE cuenta_destino = ?;", (cuenta,)))
+        if not ingresos[0][0]:
+            ingresos[0] = (0,)
+        if not transferencias_enviadas[0][0]:
+            transferencias_enviadas[0] = (0,)
+        if not transferencias_recibidas[0][0]:
+            transferencias_recibidas[0] = (0,)
+        saldo = int(ingresos[0][0]) - int(transferencias_enviadas[0][0]) + int(transferencias_recibidas[0][0])
+        return saldo
+    
+    def obtener_dueño_cuenta(self, cuenta):
+        """Función que devuelve el dueño de una cuenta"""
+        dueño = list(self.cursor.execute("SELECT dni_usuario FROM cuentas WHERE numero_cuenta = ?;", (cuenta,)))
+        return dueño[0][0]
 
 
 

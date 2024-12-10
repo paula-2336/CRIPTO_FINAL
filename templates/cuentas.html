@@ -3,24 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Usuario</title>
+    <title>Vanguard Trust Bank</title>
     <style>
-        /* Estilos generales */
+        
         body {
             font-family: Arial, sans-serif;
-            background-color: #e0f7fa; /* Fondo azul clarito */
+            background-color: #e0f7fa; 
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 100vh;
+            height: 100vh;
         }
 
-        /* Estilo del menú de navegación */
+        h1 {
+            color: #004d40;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        span {
+            color: #004d40;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+  
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            margin: auto;
+        }
+
+        
+        div > a {
+            display: block;
+            background-color: #004d40;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        div > a:hover {
+            background-color: #00796b;
+        }
+
+        
+        footer {
+            background-color: #004d40;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Estilos de navegación */
         nav {
             background-color: #004d40;
-            padding: 10px 0;
+            padding: 10px;
             text-align: center;
         }
 
@@ -34,84 +84,31 @@
         }
 
         nav a:hover {
-            color: #80cbc4;
+            color: #b2dfdb;
         }
 
-        h1 {
-            color: #004d40;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-
-        /* Contenedor central */
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
-            margin: auto;
-        }
-
-        /* Estilos para la lista de opciones */
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        li {
-            margin-bottom: 10px;
-        }
-
-        /* Estilos para los enlaces de opciones */
-        a.option {
-            display: block;
-            background-color: #004d40;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            margin: 10px 0;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
-
-        a.option:hover {
-            background-color: #00796b;
-        }
-
-        /* Estilos del footer */
-        footer {
-            background-color: #004d40;
-            color: white;
-            text-align: center;
-            padding: 20px 0;
-            margin-top: 20px;
-        }
 
         footer p {
             margin: 5px 0;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-    <!-- Menú de navegación -->
     <nav>
-        <a href="index.html">Inicio</a>
-        <a href="/login">Iniciar Sesion</a>
-        <a href="historial_trans.html">Historial de Transacciones</a>
-        <a href="mis_datos.html">Mis Datos</a>
+        <a href="../menu.html">Inicio</a>
+        <a href="../mis_datos.html"">Mis Datos</a>
+        <a href="../transferencia.html">Realizar Transferencia</a>
     </nav>
-
-    
     <div class="container">
-        <h1>Bienvenido, {{ username }}</h1>
-        <ul>
-            <li><a class="option" href="transferencia.html">Transferir dinero</a></li>
-            <li><a class="option" href="historial_trans.html">Historial de Transacciones</a></li>
-            <li><a class="option" href="mis_datos.html">Mis Datos</a></li>
-        </ul>
+        <h1 style="display: inline;"> Que cuenta desea observar,</h1>
+        <span style="display: inline;">{{ nombre_usuario }}</span>
+        {% for cuenta in cuentas %}
+            <a href="/cuentas/{{ cuenta[0] }}">{{ cuenta[1] }} <br> {{ cuenta[0] }} </a>    
+        {% endfor %}
+        <a href="/crear_cuenta">Crear Cuenta</a>
+        <a href="menu.html">Volver al inicio</a>
+    </div>
     </div>
 
     
@@ -123,4 +120,3 @@
     </footer>
 </body>
 </html>
-

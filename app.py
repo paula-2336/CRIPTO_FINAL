@@ -4,6 +4,7 @@ from criptografia import Cripto
 import sqlite3
 
 app = Flask(__name__)
+## SOLO PARA DESARROLLO
 app.secret_key = 'supersecretkey'
 bd = BaseDatos()
 cripto = Cripto()
@@ -21,21 +22,25 @@ def home_page():
   #  return conn
 
 #/////////////////////////INICIAR SESION///////////////////////
-@app.route('/login.html', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         dni = request.form['dni']
         password = request.form['password']
-        clave = bd.validar_usuario(dni, password)
-        if clave:
-            # Inicia la sesión si las credenciales son correctas
-            # TODO guradar la clave para desencriptar los datos
-            session['logged_in'] = True
-            session['dni'] = dni  # Guardamos el DNI en la sesión
-            session['clave'] = clave # Guardamos la clave
-            flash('Inicio de sesión exitoso', 'success')
-            return redirect(url_for('menu'))  
-        else:
+        try: 
+            clave = bd.validar_usuario(dni, password)
+                
+            if clave:
+                # Inicia la sesión si las credenciales son correctas
+                # TODO guradar la clave para desencriptar los datos
+                session['logged_in'] = True
+                session['dni'] = dni  # Guardamos el DNI en la sesión
+                session['clave'] = clave # Guardamos la clave
+                session['contrasena'] = password # Guardamos la contraseña para desencriptar la clave privada
+                flash('Inicio de sesión exitoso', 'success')
+                return redirect(url_for('menu'))
+            raise Exception('Credenciales incorrectas')  
+        except Exception as e:
             flash('DNI o contraseña incorrectos', 'error')
 
     return render_template('login.html')
@@ -48,7 +53,7 @@ def login():
 #     return False
 
 #////////////////////////REGISTRO DE USUARIO////////////////////////
-@app.route('/register.html', methods=['GET','POST'])
+@app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
         nombre = request.form['nombre']
@@ -62,8 +67,8 @@ def register():
         clave = bd.nuevo_usuario(dni, password, contacto, email, nombre, apellidos)
         session['logged_in'] = True
         session['dni'] = dni  # Guardamos el DNI en la sesión
-        session['clave'] = clave
-        # TODO guardar la clave para desencriptar los datos
+        session['clave'] = clave # Clave para desencriptar los datos
+        session['contrasena'] = password # Guardamos la contraseña para desencriptar la clave privada
         return redirect(url_for('registro_exitoso'))  
         
     return render_template('register.html')
@@ -110,27 +115,74 @@ def transferencia():
             flash('Hubo un error al procesar la transferencia. Inténtalo de nuevo.')
             return redirect(url_for('transferencia'))
     
-    return render_template('transferencia.html')
+    return render_template('transferencia.html', cuentas=bd.obtener_cuentas(session['dni']))
+
+@app.route('/ingreso.html', methods=['GET', 'POST'])
+def ingreso():
+    if request.method == "POST":
+        cuenta = request.form['cuenta']
+        cantidad = float(request.form['cantidad'])
+        concepto = request.form['concepto']
+        bd.realizar_ingreso(cuenta, cantidad, concepto)
+        flash('¡Ingreso realizado con éxito!')
+        return redirect(url_for('ingreso'))
+    return render_template('ingreso.html', cuentas=bd.obtener_cuentas(session['dni']))
+
+
 
 @app.route('/exito')
 def exito():
     return "¡Transferencia realizada con éxito!"
 
-#/////HISTORIAL DE TRANSFERENCIAS/////
-@app.route('/historial_trans.html')
-def historial_transferencias():
+
+@app.route('/cuentas.html')
+def cuentas():
     if not session.get('logged_in'):
-        return render_template('historial_trans.html', session_iniciada=False)
+        return render_template('cuentas.html', session_iniciada=False)
 
     dni = session['dni']
-    clave = session['clave']
-    transferencias_enviadas = bd.transferencias_enviadas(dni)
-    transferencias_recibidas = bd.transferencias_recibidas(dni)
+    cuentas = bd.obtener_cuentas(dni)
+    return render_template(
+        'cuentas.html',
+        cuentas=cuentas,
+        nombre_usuario=bd.vista_usuario(dni, session['clave'])[1],
+        session_iniciada=True
+    )
+
+@app.route('/crear_cuenta', methods=['GET', 'POST'])
+def crear_cuenta():
+    if not session.get('logged_in'):
+        return render_template('crear_cuenta.html', session_iniciada=False)
+    if request.method == 'GET':
+        return render_template('crear_cuenta.html', session_iniciada=True)
+    
+    nombre = request.form['cuenta']
+    dni = session['dni']
+    bd.nueva_cuenta(dni, nombre)
+    return redirect(url_for('cuentas'))
+
+#/////HISTORIAL DE TRANSFERENCIAS/////
+@app.route('/cuentas/<cuenta_id>')
+def historial_transferencias(cuenta_id):
+    if not session.get('logged_in'):
+        return render_template('historial_trans.html', session_iniciada=False)
+    try: 
+        dni = session['dni']
+        contraseña = session['contrasena']
+        transferencias_enviadas = bd.transferencias_enviadas(dni, cuenta_id, contraseña)
+        transferencias_recibidas = bd.transferencias_recibidas(dni, cuenta_id, contraseña)
+        ingresos = bd.ingresos(cuenta_id)
+        saldo = bd.calcular_saldo(cuenta_id)
+    except Exception as e:
+        print(f"Error al obtener el historial de transferencias: {e}")
+        return redirect(url_for('menu'))
 
     return render_template(
         'historial_trans.html',
         transferencias_enviadas=transferencias_enviadas,
         transferencias_recibidas=transferencias_recibidas,
+        ingresos=ingresos,
+        saldo=saldo,
         session_iniciada=True
     )
 

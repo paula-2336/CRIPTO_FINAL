@@ -5,6 +5,14 @@ import cryptography.exceptions
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import padding
+import getpass
+
 
 class Cripto: 
 ############### GENERACIÓN Y VERIFICACIÓN DE LA CONTRASEÑA ###################
@@ -69,7 +77,6 @@ class Cripto:
             salt = salt,
             iterations = 480000
         )
-
         #Derivamos la clave con la contraseña y el salt
         clave = kdf.derive(bytes(contraseña, encoding="utf8"))
         return base64.encodebytes(clave).decode("utf8")
@@ -98,3 +105,137 @@ class Cripto:
         chacha = ChaCha20Poly1305(clave)
         res = chacha.decrypt(nonce, datos, None)
         return res.decode("utf8")
+
+    ############### IMPLEMENTACIÓN DE RSA ###################
+    def generar_clave_privado_y_publica(self, contraseña, dni):
+        # Creamos un direcotorio para guarda los certificados del usuario
+        os.mkdir(f"./Certificados/Usuarios/{dni}")
+        # generamos la contraseña privada
+        contraseña = bytes(contraseña, encoding="utf8")
+        # We generate the private key
+        clave_privada = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048
+        )
+
+        # La guardamos en un archivo encriptada con la contraseña del usuario
+        with open(f"./Certificados/Usuarios/{dni}/{dni}-key.pem", "wb") as f:
+            f.write(clave_privada.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.BestAvailableEncryption(contraseña),
+            ))
+
+        # Generamos la requeste de firmar el certificado
+        self.generate_csr(clave_privada, dni)
+        self.generate_pem(dni)
+    
+    @staticmethod
+    def generate_csr(private_key, dni):
+        # Generamos la requeste de firmar el certificado del usuario
+        csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "ES"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "MADRID"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, dni),
+            x509.NameAttribute(NameOID.COMMON_NAME, "vanguard_trust_bank.com"),
+        ])).sign(private_key, hashes.SHA256())
+
+        # Guardamos la request en el direcotorio de solicitudes
+        with open(f"./Certificados/VanguardTrustBank/solicitudes/{dni}-csr.pem", "wb") as file:
+            file.write(csr.public_bytes(serialization.Encoding.PEM))
+
+    
+    @staticmethod
+    def generate_pem(dni):
+        # Función que genera el certificado del usuario a partir de la request
+        directorio_actual = os.getcwd()
+
+        # Cambiar el directorio al de los certificados del banco
+        os.chdir("./Certificados/VanguardTrustBank/")
+        # Obtenemos la contraseña del banco para firmar el certificado del usuario
+        contraseña = getpass.getpass("Enter your password: ")
+
+        # Obtenemos el serial del certificado  
+        with open("./serial", "rb") as file:
+            file_data = file.read().decode("utf-8")
+
+        # Firmamos el certificado del usuario con openssl
+        os.system(f"openssl ca -in ./solicitudes/{dni}-csr.pem -notext -config "
+                  f"./openssl-VanguardTrustBank.conf --passin pass:{contraseña}")
+
+        # Copiamos el certificado del usuario a su directoio
+        os.system(f"cp ./nuevoscerts/{file_data[:-1]}.pem "
+                  f"../Usuarios/{dni}/{dni}-cert.pem")
+
+        # Volvemos al directorio original
+        os.chdir(directorio_actual)
+    
+    def obtener_clave_publica(self, dni):
+        with open(f"./Certificados/Usuarios/{dni}/{dni}-cert.pem", "rb") as archivo_pem:
+            datos_pem = archivo_pem.read()
+
+        cert = x509.load_pem_x509_certificate(datos_pem)
+
+        clave_publica = cert.public_key()
+
+        pem_publica = clave_publica.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        return base64.encodebytes(pem_publica).decode("utf8")
+    
+    def encriptar_asunto(self, remitente, beneficiario, asunto):
+        clave_publica_remitente = self.obtener_clave_publica(remitente)
+        clave_publica_beneficiario = self.obtener_clave_publica(beneficiario)
+        clave_publica_remitente = base64.decodebytes(bytes(clave_publica_remitente, encoding="utf8"))
+        clave_publica_beneficiario = base64.decodebytes(bytes(clave_publica_beneficiario, encoding="utf8"))
+
+        clave_publica_remitente = serialization.load_pem_public_key(clave_publica_remitente)
+        clave_publica_beneficiario = serialization.load_pem_public_key(clave_publica_beneficiario)
+
+        # Encriptamos el asunto con la clave pública del beneficiario
+        datos = bytes(asunto, encoding="utf8")
+        datos_beneficiario = clave_publica_beneficiario.encrypt(
+            datos,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        # Encriptamos la clave con la clave pública del remitente
+        datos_remitente = clave_publica_remitente.encrypt(
+            datos,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        return (base64.encodebytes(datos_remitente).decode("utf8"), base64.encodebytes(datos_beneficiario).decode("utf8"))
+
+
+    def desencriptar_asunto(self, dni, contraseña_clave_privada, asunto_ecnriptado):
+        with open(f"./Certificados/Usuarios/{dni}/{dni}-key.pem", "rb") as archivo_pem:
+            datos_pem = archivo_pem.read()
+        
+        contraseña_clave_privada = bytes(contraseña_clave_privada, encoding="utf8")
+        clave_privada = load_pem_private_key(
+            datos_pem,
+            contraseña_clave_privada,
+        )
+
+        asunto_ecnriptado = base64.decodebytes(bytes(asunto_ecnriptado, encoding="utf8"))
+        asunto = clave_privada.decrypt(
+            asunto_ecnriptado,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        return asunto.decode("utf8")
