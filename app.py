@@ -2,6 +2,10 @@ from flask import Flask, request, redirect, render_template, url_for, g, flash, 
 from Base_de_Datos import BaseDatos
 from criptografia import Cripto
 import sqlite3
+import smtplib
+import random
+from dotenv import load_dotenv
+import ssl
 
 app = Flask(__name__)
 ## SOLO PARA DESARROLLO
@@ -51,6 +55,42 @@ def login():
 #         stored_password_hash = user['password_hash']
 #         return check_password_hash(stored_password_hash, password)  # Comparar el hash
 #     return False
+
+
+
+#////////////////////////ENVIAR MAIL CON CODIGO VERIFICACION////////////////////////
+
+def send_mail(username):
+    try:
+        load_dotenv()
+        email_reciver = to
+        password = os.getenv("PASSWORD")
+        email_sender = "100472336@alumnos.uc3m.es"
+        email_subject = "Confirmacion de correo"
+
+        # Creamos el mensaje
+        mensaje = EmailMessage()
+        mensaje['Subject'] = email_subject
+        mensaje['From'] = email_sender
+        mensaje['To'] = email_reciver
+
+        #Generamos un codigo de 6 digitos que utilizaremos como codigo de verificacion
+        codigo_v = random.randint(100000, 999999)
+        mensaje_codigo = str("Codigo de verificacion: " + str(codigo_v) + "\n")
+        mensaje.set_content(mensaje_codigo)
+        context = ssl.create_default_context()
+
+        # Enviamos el mensaje
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
+            smtp.login(email_sender, password)
+            smtp.sendmail(email_sender, email_reciver, mensaje.as_string())
+
+        # Retornamos el codigo de verificacion, para su posterior comprobacion
+        return codigo_v
+    
+     #en caso de error al enviar el correo:
+    except Exception as e:
+        print(f"Error al enviar el correo: {e}")
 
 #////////////////////////REGISTRO DE USUARIO////////////////////////
 @app.route('/register', methods=['GET','POST'])
