@@ -32,7 +32,6 @@ class BaseDatos:
                                 nonce_nombre CHAR(24), -- Valor uso único del nombre
                                 apellido VARCHAR2(100), -- Apellido del usuario
                                 nonce_apellido CHAR(24) -- Valor uso único del apellido
-                               
                                 );""")
 
 
@@ -132,38 +131,60 @@ class BaseDatos:
             datos_desencriptados.append(dato_desencriptado)
         return datos_desencriptados
 
-    def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto):
+    def nueva_transferencia(self, remitente, beneficiario, cantidad, concepto, contraseña_clave_privada):
         """Función que añade una nueva transferencia a la bd de transferencias"""
-        # TODO Añadir la encriptación asimetrica del concepto
         # TODO Firmar la cantidad de la transferencia
         dni_beneficiario = self.obtener_dueño_cuenta(beneficiario)
         dni_remitente = self.obtener_dueño_cuenta(remitente)
         concepto_origen, concepto_destino = self.__criptografia.encriptar_asunto(dni_remitente, dni_beneficiario, concepto)
+        firma = self.__criptografia.firmar_cantidad(dni_remitente, contraseña_clave_privada, cantidad)
         print(concepto_origen, concepto_destino)
-        self.cursor.execute("INSERT INTO transferencias(cuenta_origen, cuenta_destino, monto, concepto_origen, concepto_destino) VALUES(?,?,?,?, ?);", 
-                            (remitente, beneficiario, cantidad, concepto_origen, concepto_destino))
+        self.cursor.execute("INSERT INTO transferencias(cuenta_origen, cuenta_destino, monto, concepto_origen, concepto_destino, firma) VALUES(?,?,?,?,?,?);", 
+                            (remitente, beneficiario, cantidad, concepto_origen, concepto_destino, firma))
         print(remitente, beneficiario, cantidad, concepto_origen, concepto_destino)
         self.conexion.commit()
 
     def transferencias_enviadas(self, dni, cuenta, contraseña):
-        # TODO Añadir la desencriptación del concepto
+        # TODO añadir comprobación de la firma de la cantidad
         """Esta funcion crea una vista de todas las transferencias registradas donde el remitente es el usuario seleccionado"""
         vista = []
-        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_destino, monto, concepto_origen FROM transferencias WHERE cuenta_origen = ?;", (cuenta,)))
-        if vista[0] != None:
-            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[0][3])
-            vista = [[vista[0][0], vista[0][1], vista[0][2], asunto_descifrado],]
-        return vista
+        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_destino, monto, concepto_origen, firma, cuenta_origen FROM transferencias WHERE cuenta_origen = ?;", (cuenta,)))
+
+        vista_final = []
+        for i in range(len(vista)):
+            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[i][3])
+            usuario_origen = self.obtener_dueño_cuenta(vista[i][5])
+            # Comprobamos que el cirtaficado haya sido firamdo por el banco
+            if not self.__criptografia.verificar_cadena_certificado(usuario_origen):
+                continue
+            if self.__criptografia.comprobar_firma_cantidad(usuario_origen, vista[i][2], vista[i][4]):
+                print("La firma es incorrecta")
+                vista.pop(i)
+                continue
+            vista_final.append([vista[i][0], vista[i][1], vista[i][2], asunto_descifrado])
+            print("La firma es correcta")
+        return vista_final
 
     def transferencias_recibidas(self, dni, cuenta, contraseña):
-        # TODO Añadir la desencriptación del concepto
         """Esta función crea una vista de todas las transferencias registradas donde el beneficiario es el usuario seleccionado."""
+        # Realizamos la consulta de las trasnferencias que tiene como cuenta destino la cuenta seleccionada
         vista = [] 
-        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_origen, monto, concepto_destino FROM transferencias WHERE cuenta_destino = ?;", (cuenta,)))
-        if len(vista) != 0:
-            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[0][3])
-            vista = [[vista[0][0], vista[0][1], vista[0][2], asunto_descifrado],]
-        return vista
+        vista = list(self.cursor.execute("SELECT fecha_transfer, cuenta_origen, monto, concepto_destino, firma FROM transferencias WHERE cuenta_destino = ?;", (cuenta,)))
+        # Comprobamos la firma de la cantidad y desenccriptamos el asunto
+        vista_final = []
+        for i in range(len(vista)):
+            asunto_descifrado = self.__criptografia.desencriptar_asunto(dni, contraseña, vista[i][3])
+            usuario_origen = self.obtener_dueño_cuenta(vista[i][1])
+            # Comprobamos que el cirtaficado haya sido firamdo por el banco
+            if not self.__criptografia.verificar_cadena_certificado(usuario_origen):
+                continue
+            if self.__criptografia.comprobar_firma_cantidad(usuario_origen, vista[i][2], vista[i][4]):
+                print("La firma es incorrecta")
+                vista.pop(i) # No se cuenta la transferencia si la firma es incorrecta
+                continue
+            vista_final.append([vista[i][0], vista[i][1], vista[i][2], asunto_descifrado])
+            print("La firma es correcta")
+        return vista_final
     
     def realizar_ingreso(self, cuenta, cantidad, concepto):
         """Función que añade un ingreso a la base de datos de ingresos"""

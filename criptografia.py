@@ -239,3 +239,76 @@ class Cripto:
         )
 
         return asunto.decode("utf8")
+    
+    def firmar_cantidad(self, dni, contraseña_clave_privada, cantidad):
+        with open(f"./Certificados/Usuarios/{dni}/{dni}-key.pem", "rb") as archivo_pem:
+            datos_pem = archivo_pem.read()
+        
+        contraseña_clave_privada = bytes(contraseña_clave_privada, encoding="utf8")
+        clave_privada = load_pem_private_key(
+            datos_pem,
+            contraseña_clave_privada,
+        )
+
+        cantidad_str = str(cantidad)
+
+        firma = clave_privada.sign(
+            bytes(cantidad_str, encoding="utf8"),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+
+        return base64.encodebytes(firma).decode("utf8")
+    
+    def comprobar_firma_cantidad(self, dni, cantidad, firma):
+        # Obtenemos la clave pública del usuario
+        clave_publica = self.obtener_clave_publica(dni)
+        clave_publica = base64.decodebytes(bytes(clave_publica, encoding="utf8"))
+        clave_publica = serialization.load_pem_public_key(clave_publica)
+
+        firma = base64.decodebytes(bytes(firma, encoding="utf8"))
+
+        cantidad_str = str(cantidad)
+
+        try:
+            clave_publica.verify(
+                firma,
+                bytes(cantidad_str, encoding="utf8"),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            return True
+        except cryptography.exceptions.InvalidSignature:
+            return False
+
+
+    def verificar_cadena_certificado(self, dni):
+        # Obtenemos el certificado del usuario
+        with open(f"./Certificados/Usuarios/{dni}/{dni}-cert.pem", "rb") as archivo_pem:
+            datos_pem = archivo_pem.read()
+
+        cert = x509.load_pem_x509_certificate(datos_pem)
+
+        # Obtenemos la cadena de certificados del banco
+        with open("./Certificados/VanguardTrustBank/VanguardTrustBank.pem", "rb") as archivo_pem:
+            datos_pem = archivo_pem.read()
+
+        cert_banco = x509.load_pem_x509_certificate(datos_pem)
+
+        # Verificamos que el certificado del usuario está firmado por el banco
+        try:
+            cert_banco.public_key().verify(
+                cert.signature,
+                cert.tbs_certificate_bytes,
+                padding.PKCS1v15(),
+                cert.signature_hash_algorithm,
+            )
+            return True
+        except cryptography.exceptions.InvalidSignature:
+            return False
